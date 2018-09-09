@@ -7,10 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class Image extends Model
 {
     protected $table = 't_images';
+    public $timestamps = false;
+    protected $primaryKey = 'guid';
+    protected $casts = ['guid' => 'uuid'];
+    protected $fillable=['guid','img','description'];
 
-    public static function GetAll()
+    public static function Get($guid=null)
     {
-        $Images=self::all();
+        $Images = is_null($guid) ? self::all() : self::where('guid','=',$guid)->get();
         foreach ($Images as $image) $image->tags;
         return $Images;
     }

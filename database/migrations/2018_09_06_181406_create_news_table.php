@@ -17,16 +17,14 @@ class CreateNewsTable extends Migration
 
             $table->increments('id')->unique();
 
-            $table->string('slug')->unique()->nullable(false);
-            $table->index('slug');
+            $table->string('slug')->unique()->index()->nullable(false);
+
 
             $table->string('preview')->nullable();
 
-            $table->timestamp('created_at')->useCurrent();
-            $table->index('created_at');
+            $table->timestamp('created_at')->index()->useCurrent();
 
-            $table->string('header')->nullable(false);
-            $table->index('header');
+            $table->string('header')->index()->nullable(false);
 
             $table->text('content')->nullable(false);
 
