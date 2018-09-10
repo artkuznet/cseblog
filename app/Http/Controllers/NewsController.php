@@ -16,7 +16,7 @@ class NewsController extends Controller
         $header=request()->exists('header') ? request()->input('header') : null;
 
         $News=News::Get($Slug,$from,$to,$header);
-        if(count($News)===0 && !is_null($Slug)) abort(404);
+        if(count($News)===0 && !is_null($Slug)) abort(404); // если ничего не найдено, выдаем 404
         return response()->json($News,200) ;
     }
 
@@ -47,8 +47,8 @@ class NewsController extends Controller
         $Slug = $request->exists('slug') ? str_slug($request->input('slug')) : str_slug($Header);
         $Slug.=count(News::Get($Slug)) > 0 ? '-'.round(microtime(true) * 1000) : ''; // чтобы избежать повторяющихся слагов
 
-        $Image=Image::where('guid','=',$request->input('guid'))->get();
-        $Preview = count($Image)>0 ? $Image[0]->img : $request->input('preview');
+        $Image=Image::where('guid','=',$request->input('guid'))->get(); // если передали guid картинки, по ставим превью из галереи
+        $Preview = count($Image)>0 ? $Image[0]->img : $request->input('preview'); // иначе превью из параметров
 
         $News=new News([
             'slug'=>$Slug,

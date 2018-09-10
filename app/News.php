@@ -12,7 +12,7 @@ class News extends Model
 
     public static function Get($slug = null,$from = null,$to = null,$header = null)
     {
-        $filter=[];
+        $filter=[]; // фильтр по дате и заголовкам
         if(!is_null($slug)) array_push($filter,['slug','=',$slug]);
         if(!is_null($from)) array_push($filter,['created_at','>=',$from]);
         if(!is_null($to)) array_push($filter,['created_at','<=',$to]);

@@ -4,8 +4,6 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-use Faker\Provider\Uuid;
-
 class CreateImagesTable extends Migration
 {
     /**
@@ -16,13 +14,9 @@ class CreateImagesTable extends Migration
     public function up()
     {
         Schema::create('t_images', function (Blueprint $table) {
-
             $table->uuid('guid')->unique()->primary()->index();
-
             $table->string('img')->unique();
             $table->string('description')->nullable();
-
-
         });
     }
 

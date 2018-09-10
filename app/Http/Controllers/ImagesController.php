@@ -10,14 +10,14 @@ use Ramsey\Uuid\Uuid;
 
 class ImagesController extends Controller
 {
-    private $FolderName = 'gallery';
+    private $FolderName = 'gallery'; // имя директории с файлами картинок в public
 
     public function Get($guid = null)
     {
-        if(!is_null($guid) && !Uuid::isValid($guid)) abort(404);
-        $tags=request()->exists('tags') ? request()->input('tags') : null;
+        if(!is_null($guid) && !Uuid::isValid($guid)) abort(400); // если неверный формат uuid, то bad request
+        $tags=request()->exists('tags') ? request()->input('tags') : null; // проверяем, есть ли теги запросе
         $Image=Image::Get($guid,$tags);
-        if(count($Image)===0 && !is_null($guid)) abort(404);
+        if(count($Image)===0 && !is_null($guid)) abort(404); // если ничего не найдено, то 404
         return response()->json($Image,200);
     }
 
@@ -30,13 +30,13 @@ class ImagesController extends Controller
             [
                 'image' => 'required|image|mimes:jpeg,png,jpg,gif'
             ]
-        );
+        ); // валидация файла изображения
 
         if ($Validator->fails()) return response()->json($Validator->errors(), 400);
 
         $ImageFile = $request->file('image');
-        $Guid = Uuid::uuid1();
-        $ImageName = md5($Guid) . '.' . $ImageFile->getClientOriginalExtension();
+        $Guid = Uuid::uuid1(); // генерируем guid
+        $ImageName = md5($Guid) . '.' . $ImageFile->getClientOriginalExtension(); // генерируем имя файла
         $ImgSrc = '/' . $this->FolderName . '/' . $ImageName;
         $Description = $request->exists('description') ? $request->input('description') : null;
 
@@ -82,14 +82,14 @@ class ImagesController extends Controller
             $ImageFile = $request->file('image');
             $ImageName = md5($Image->guid) . '.' . $ImageFile->getClientOriginalExtension();
             $ImgSrc = '/' . $this->FolderName . '/' . $ImageName;
-            unlink(public_path($Image->img));
+            unlink(public_path($Image->img));   //удаляем старый файл изображения
             $ImageFile->move(public_path('/' . $this->FolderName), $ImageName);
             $Image->img=$ImgSrc;
         }
 
         if($request->exists('description')) $Image->description=$request->input('description');
 
-        $Image->tags()->detach();
+        $Image->tags()->detach(); // обновляем связь many to many
         if ($request->exists('tags')) {
             foreach ($request->input('tags') as $TagName) {
                 $Tag = Tag::firstOrNew(['name' => $TagName]);
@@ -105,7 +105,7 @@ class ImagesController extends Controller
     public function Delete($guid)
     {
         $Image=Image::find($guid);
-        if(!is_null($Image)) $Image->tags()->detach();
+        if(!is_null($Image)) $Image->tags()->detach(); // не забываем открепить теги
         return response()->json(['success' => Image::destroy($guid)],200);
     }
 }
