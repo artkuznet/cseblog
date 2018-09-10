@@ -41,3 +41,4 @@ PHP 7.2.8</b><br /><br/>
 <i>tags[]</i> - массив тегов<br /><br />
 Удаление изображений (admin):<br />
 <i>DELETE /images/{guid}</i><br /><br />
+Для admin необходмо передавать дополнительно параметр <i>password</i> = bacb2f0c06c9d83b3e93570e568eb49c 
