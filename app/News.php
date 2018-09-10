@@ -10,8 +10,13 @@ class News extends Model
     public $timestamps = false;
     protected $fillable=['slug','preview','header','content'];
 
-    public static function Get($slug = null)
+    public static function Get($slug = null,$from = null,$to = null,$header = null)
     {
-        return is_null($slug) ? self::all() : self::where('slug','=',$slug)->get();
+        $filter=[];
+        if(!is_null($slug)) array_push($filter,['slug','=',$slug]);
+        if(!is_null($from)) array_push($filter,['created_at','>=',$from]);
+        if(!is_null($to)) array_push($filter,['created_at','<=',$to]);
+        if(!is_null($header)) array_push($filter,['header','like','%'.$header.'%']);
+        return self::where($filter)->get();
     }
 }

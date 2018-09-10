@@ -14,20 +14,12 @@ class CreateNewsTable extends Migration
     public function up()
     {
         Schema::create('t_news', function (Blueprint $table) {
-
             $table->increments('id')->unique();
-
             $table->string('slug')->unique()->index()->nullable(false);
-
-
-            $table->string('preview')->nullable();
-
+            $table->string('preview')->nullable(false);
             $table->timestamp('created_at')->index()->useCurrent();
-
             $table->string('header')->index()->nullable(false);
-
             $table->text('content')->nullable(false);
-
         });
     }
 

@@ -12,9 +12,15 @@ class Image extends Model
     protected $casts = ['guid' => 'uuid'];
     protected $fillable=['guid','img','description'];
 
-    public static function Get($guid=null)
+    public static function Get($guid=null,$tags=null)
     {
-        $Images = is_null($guid) ? self::all() : self::where('guid','=',$guid)->get();
+        $filter=[];
+        if(!is_null($guid)) array_push($filter,['guid','=',$guid]);
+        $Images = is_null($tags) ?
+            self::where($filter)->get() :
+            self::where($filter)->whereHas('tags', function ($query) use ($tags) {
+                $query->whereIn('name', $tags);
+            })->get();
         foreach ($Images as $image) $image->tags;
         return $Images;
     }
@@ -23,5 +29,4 @@ class Image extends Model
     {
         return $this->belongsToMany(Tag::class,'t_image_has_tag','image_guid','tag_id','guid','id');
     }
-
 }
