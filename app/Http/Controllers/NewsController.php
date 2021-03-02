@@ -1,111 +1,142 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use Illuminate\Http\{
+    JsonResponse,
+    Request
+};
 use App\News;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Image;
 
 class NewsController extends Controller
 {
-    public function Get($Slug = null)
+    /**
+     * @param string|null $slug
+     * @return JsonResponse
+     */
+    public function get(string $slug = null): JsonResponse
     {
-        $from=request()->exists('from') ? request()->input('from') : null;
-        $to=request()->exists('to') ? request()->input('to') : null;
-        $header=request()->exists('header') ? request()->input('header') : null;
+        $from = request()->exists('from') ? request()->input('from') : null;
+        $to = request()->exists('to') ? request()->input('to') : null;
+        $header = request()->exists('header') ? request()->input('header') : null;
 
-        $News=News::Get($Slug,$from,$to,$header);
-        if(count($News)===0 && !is_null($Slug)) abort(404); // если ничего не найдено, выдаем 404
-        return response()->json($News,200) ;
+        $news = News::get($slug, $from, $to, $header);
+        if (null !== $slug && count($news) === 0) {
+            abort(404); // если ничего не найдено, выдаем 404
+        }
+
+        return response()->json($news, 200);
     }
 
-    public function Post(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function post(Request $request): JsonResponse
     {
-        $Validator = Validator::make(
-            [
-                'header' => $request->input('header'),
-                'content' => $request->input('content'),
-                'guid' => $request->input('guid'),
-                'preview' => $request->input('preview'),
-                'slug' => $request->input('slug')
-            ],
-            [
-                'header' => 'required',
-                'content' => 'required',
-                'guid'=>'required_without:preview|nullable|uuid',
-                'preview' => 'required_without:guid|nullable|url',
-                'slug' => 'alpha_dash|nullable'
-            ]
-        );
-
-        if ($Validator->fails()) return response()->json($Validator->errors(), 400);
-
-        $Header = $request->input('header');
-        $Content = $request->input('content');
-
-        $Slug = $request->exists('slug') ? str_slug($request->input('slug')) : str_slug($Header);
-        $Slug.=count(News::Get($Slug)) > 0 ? '-'.round(microtime(true) * 1000) : ''; // чтобы избежать повторяющихся слагов
-
-        $Image=Image::where('guid','=',$request->input('guid'))->get(); // если передали guid картинки, по ставим превью из галереи
-        $Preview = count($Image)>0 ? $Image[0]->img : $request->input('preview'); // иначе превью из параметров
-
-        $News=new News([
-            'slug'=>$Slug,
-            'preview'=>$Preview,
-            'header'=>$Header,
-            'content'=>$Content
+        $validator = Validator::make([
+            'header' => $request->input('header'),
+            'content' => $request->input('content'),
+            'guid' => $request->input('guid'),
+            'preview' => $request->input('preview'),
+            'slug' => $request->input('slug'),
+        ], [
+            'header' => 'required',
+            'content' => 'required',
+            'guid' => 'required_without:preview|nullable|uuid',
+            'preview' => 'required_without:guid|nullable|url',
+            'slug' => 'alpha_dash|nullable',
         ]);
-        $News->save();
-        return response()->json($News, 200);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
+        $header = $request->input('header');
+        $slug = $request->exists('slug')
+            ? str_slug($request->input('slug'))
+            : str_slug($header);
+        $slug .= count(News::get($slug)) > 0 ? '-' . round(microtime(true) * 1000) : ''; // чтобы избежать повторяющихся слагов
+        /** @var Image[] $images */
+        $images = Image::where('guid', '=', $request->input('guid'))->get(); // если передали guid картинки, по ставим превью из галереи
+        $news = new News([
+            'slug' => $slug,
+            'preview' => count($images) > 0
+                ? $images[0]->img
+                : $request->input('preview'), // иначе превью из параметров,
+            'header' => $header,
+            'content' => $request->input('content'),
+        ]);
+        $news->save();
+
+        return response()->json($news, 200);
     }
 
-    public function Update(Request $request,$id)
+    /**
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function update(Request $request, int $id): JsonResponse
     {
-        $Validator = Validator::make(
-            [
-                'guid' => $request->input('guid'),
-                'preview' => $request->input('preview'),
-                'slug' => $request->input('slug')
-            ],
-            [
-                'guid'=>'nullable|uuid',
-                'preview' => 'nullable|url',
-                'slug' => 'alpha_dash|nullable'
-            ]
-        );
+        $validator = Validator::make([
+            'guid' => $request->input('guid'),
+            'preview' => $request->input('preview'),
+            'slug' => $request->input('slug'),
+        ], [
+            'guid' => 'nullable|uuid',
+            'preview' => 'nullable|url',
+            'slug' => 'alpha_dash|nullable',
+        ]);
 
-        if ($Validator->fails()) return response()->json($Validator->errors(), 400);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
 
-        $News=News::find($id);
-        if(is_null($News)) abort(404);
+        /** @var News $news */
+        $news = News::find($id);
+        if (is_null($news)) {
+            abort(404);
+        }
 
-        if($request->exists('header')) $News->header=$request->input('header');
-        if($request->exists('content')) $News->content=$request->input('content');
+        if ($request->exists('header')) {
+            $news->header = $request->input('header');
+        }
+        if ($request->exists('content')) {
+            $news->content = $request->input('content');
+        }
 
-        if($request->exists('slug'))
-        {
+        if ($request->exists('slug')) {
             $Slug = str_slug($request->input('slug'));
-            $Slug.=count(News::Get($Slug)) > 0 ? '-'.round(microtime(true) * 1000) : ''; // чтобы избежать повторяющихся слагов
-            $News->slug=$Slug;
+            $Slug .= count(News::get($Slug)) > 0 ? '-' . round(microtime(true) * 1000) : ''; // чтобы избежать повторяющихся слагов
+            $news->slug = $Slug;
         }
 
-        if($request->exists('guid'))
-        {
-            $Image = Image::where('guid', '=', $request->input('guid'))->get();
-            if(count($Image)>0) $News->preview = $Image[0]->img;
-        }
-        else if($request->exists('preview'))
-        {
-            $News->preview=$request->input('preview');
+        if ($request->exists('guid')) {
+            /** @var Image[] $images */
+            $images = Image::where('guid', '=', $request->input('guid'))->get();
+            if (count($images) > 0) {
+                $news->preview = $images[0]->img;
+            }
+        } else if ($request->exists('preview')) {
+            $news->preview = $request->input('preview');
         }
 
-        $News->save();
-        return response()->json($News,200);
+        $news->save();
+
+        return response()->json($news, 200);
     }
 
-    public function Delete($id)
+    /**
+     * @param $id
+     * @return JsonResponse
+     */
+    public function delete(int $id): JsonResponse
     {
-        return response()->json(['success' => News::destroy($id)],200);
+        return response()->json(['success' => News::destroy($id)], 200);
     }
 }

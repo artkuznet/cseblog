@@ -1,16 +1,16 @@
 <?php
 
-Route::get('/news', 'NewsController@Get');
-Route::get('/news/{slug}', 'NewsController@Get');
-Route::post('/news', 'NewsController@Post');
+Route::get('/news', 'NewsController@get');
+Route::get('/news/{slug}', 'NewsController@get');
+Route::post('/news', 'NewsController@post');
 
-Route::get('/images', 'ImagesController@Get');
-Route::get('/images/{guid}', 'ImagesController@Get');
-Route::post('/images', 'ImagesController@Post');
+Route::get('/images', 'ImagesController@get');
+Route::get('/images/{guid}', 'ImagesController@get');
+Route::post('/images', 'ImagesController@post');
 
 Route::group(['middleware' => ['admin']], function () {
-    Route::put('/news/{id}','NewsController@Update');
-    Route::delete('/news/{id}','NewsController@Delete');
-    Route::post('/images/{guid}', 'ImagesController@Update'); // через x-www-form-urlencoded файл не передать, поэтому post
-    Route::delete('/images/{guid}','ImagesController@Delete');
+    Route::put('/news/{id}', 'NewsController@update');
+    Route::delete('/news/{id}', 'NewsController@delete');
+    Route::post('/images/{guid}', 'ImagesController@update'); // через x-www-form-urlencoded файл не передать, поэтому post
+    Route::delete('/images/{guid}', 'ImagesController@delete');
 });

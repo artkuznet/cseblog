@@ -22,6 +22,6 @@ class VerifyCsrfToken extends Middleware
         '/news/*',
         '/news',
         '/images/*',
-        '/images'
+        '/images',
     ];
 }
